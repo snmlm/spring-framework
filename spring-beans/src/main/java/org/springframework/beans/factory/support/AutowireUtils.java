@@ -19,6 +19,7 @@ package org.springframework.beans.factory.support;
 import java.beans.PropertyDescriptor;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -49,6 +50,17 @@ import org.springframework.util.ClassUtils;
  */
 abstract class AutowireUtils {
 
+	private static final Comparator<Executable> COMPARATOR = (e1, e2) -> {
+		boolean p1 = Modifier.isPublic(e1.getModifiers());
+		boolean p2 = Modifier.isPublic(e2.getModifiers());
+		if (p1 != p2) {
+			return (p1 ? -1 : 1);
+		}
+		int c1pl = e1.getParameterCount();
+		int c2pl = e2.getParameterCount();
+		return (c1pl < c2pl ? 1 : (c1pl > c2pl ? -1 : 0));
+	};
+
 	/**
 	 * Sort the given constructors, preferring public constructors and "greedy" ones with
 	 * a maximum number of arguments. The result will contain public constructors first,
@@ -57,19 +69,7 @@ abstract class AutowireUtils {
 	 * @param constructors the constructor array to sort
 	 */
 	public static void sortConstructors(Constructor<?>[] constructors) {
-		Arrays.sort(constructors, new Comparator<Constructor<?>>() {
-			@Override
-			public int compare(Constructor<?> c1, Constructor<?> c2) {
-				boolean p1 = Modifier.isPublic(c1.getModifiers());
-				boolean p2 = Modifier.isPublic(c2.getModifiers());
-				if (p1 != p2) {
-					return (p1 ? -1 : 1);
-				}
-				int c1pl = c1.getParameterCount();
-				int c2pl = c2.getParameterCount();
-				return (c1pl < c2pl ? 1 : (c1pl > c2pl ? -1 : 0));
-			}
-		});
+		Arrays.sort(constructors, COMPARATOR);
 	}
 
 	/**
@@ -80,19 +80,7 @@ abstract class AutowireUtils {
 	 * @param factoryMethods the factory method array to sort
 	 */
 	public static void sortFactoryMethods(Method[] factoryMethods) {
-		Arrays.sort(factoryMethods, new Comparator<Method>() {
-			@Override
-			public int compare(Method fm1, Method fm2) {
-				boolean p1 = Modifier.isPublic(fm1.getModifiers());
-				boolean p2 = Modifier.isPublic(fm2.getModifiers());
-				if (p1 != p2) {
-					return (p1 ? -1 : 1);
-				}
-				int c1pl = fm1.getParameterCount();
-				int c2pl = fm2.getParameterCount();
-				return (c1pl < c2pl ? 1 : (c1pl > c2pl ? -1 : 0));
-			}
-		});
+		Arrays.sort(factoryMethods, COMPARATOR);
 	}
 
 	/**
